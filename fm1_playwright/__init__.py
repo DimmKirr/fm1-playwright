@@ -8,7 +8,10 @@ from fm1_playwright.recording import (
     start_audio_recording,
     stop_audio_recording,
     frames_to_video,
+    mux_video_audio,
     video_to_gif,
+    video_to_mp4,
+    webm_to_mp3,
 )
 
 __all__ = [
@@ -18,5 +21,8 @@ __all__ = [
     'start_audio_recording',
     'stop_audio_recording',
     'frames_to_video',
+    'mux_video_audio',
     'video_to_gif',
+    'video_to_mp4',
+    'webm_to_mp3',
 ]

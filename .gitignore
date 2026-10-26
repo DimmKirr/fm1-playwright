@@ -4,5 +4,6 @@ __pycache__/
 dist/
 build/
 results/
+tests/results/
 .idea/
 .DS_Store

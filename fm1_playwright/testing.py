@@ -289,8 +289,13 @@ class FirmwareUITest(unittest.TestCase):
             print(f'  GIF: {gif_path} ({len(frames)} frames)', flush=True)
 
     @contextlib.contextmanager
-    def record_video(self, name, fps=4):
+    def record_video(self, name, fps=4, output_dir=None):
         """Record canvas frames during a block, then stitch into a webm video.
+
+        Args:
+            name: base name for the output file
+            fps: frames per second
+            output_dir: directory for the video file (defaults to screenshot dir)
 
         Usage:
             with self.record_video('demo', fps=4) as snap:
@@ -308,7 +313,9 @@ class FirmwareUITest(unittest.TestCase):
         yield snap
         snap()
 
-        video_path = self._screenshot_dir / f'{FIRMWARE_NAME}-{name}.webm'
+        dest = Path(output_dir) if output_dir else self._screenshot_dir
+        dest.mkdir(parents=True, exist_ok=True)
+        video_path = dest / f'{FIRMWARE_NAME}-{name}.webm'
         if len(frames) >= 2:
             frames_to_video(frames_dir, 'frame-%04d.png', str(video_path), fps=fps)
         shutil.rmtree(frames_dir, ignore_errors=True)

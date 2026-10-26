@@ -150,6 +150,58 @@ def frames_to_video(frames_dir, pattern, output_path, fps=4):
     return os.path.exists(output_path) and os.path.getsize(output_path) > 0
 
 
+def webm_to_mp3(webm_path, mp3_path):
+    """Convert a webm audio file to MP3 using ffmpeg.
+
+    Returns True if the MP3 was created successfully.
+    """
+    if not shutil.which('ffmpeg'):
+        return False
+    subprocess.run([
+        'ffmpeg', '-y', '-i', webm_path,
+        '-c:a', 'libmp3lame', '-q:a', '2',
+        mp3_path,
+    ], capture_output=True)
+    return os.path.exists(mp3_path) and os.path.getsize(mp3_path) > 0
+
+
+def mux_video_audio(video_path, audio_path, output_path):
+    """Combine a video file and an audio file into a single MP4.
+
+    Returns True if the muxed file was created successfully.
+    """
+    if not shutil.which('ffmpeg'):
+        return False
+    subprocess.run([
+        'ffmpeg', '-y',
+        '-i', video_path, '-i', audio_path,
+        '-c:v', 'libx264', '-crf', '23', '-preset', 'medium',
+        '-pix_fmt', 'yuv420p',
+        '-c:a', 'aac', '-b:a', '192k',
+        '-movflags', '+faststart',
+        '-shortest',
+        output_path,
+    ], capture_output=True)
+    return os.path.exists(output_path) and os.path.getsize(output_path) > 0
+
+
+def video_to_mp4(video_path, mp4_path):
+    """Convert a video file to MP4 (h264+aac) using ffmpeg.
+
+    Returns True if the MP4 was created successfully.
+    """
+    if not shutil.which('ffmpeg'):
+        return False
+    subprocess.run([
+        'ffmpeg', '-y', '-i', video_path,
+        '-c:v', 'libx264', '-crf', '23', '-preset', 'medium',
+        '-pix_fmt', 'yuv420p',
+        '-movflags', '+faststart',
+        mp4_path,
+    ], capture_output=True)
+    return os.path.exists(mp4_path) and os.path.getsize(mp4_path) > 0
+
+
 def video_to_gif(video_path, gif_path, fps=4):
     """Convert a video file to an animated GIF using ffmpeg.
 

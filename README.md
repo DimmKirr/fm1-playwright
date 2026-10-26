@@ -6,7 +6,11 @@ Playwright test harness for [FM-1 emulator](https://github.com/joakimeriksson/fm
 [![PyPI](https://img.shields.io/pypi/v/fm1-playwright)](https://pypi.org/project/fm1-playwright/)
 
 <p align="center">
-  <img src="https://github.com/DimmKirr/setup-fm1-emulator/releases/download/release-screenshots/felucca-play-note.gif" alt="Playing notes on the FM-1 emulator" width="680">
+  <img src="https://github.com/DimmKirr/fm1-playwright/releases/download/demo/felucca-play-note.gif" alt="Playing notes on the FM-1 emulator" width="680">
+</p>
+
+<p align="center">
+  <img src="https://github.com/DimmKirr/fm1-playwright/releases/download/demo/felucca-preset-scroll.gif" alt="Scrolling presets" width="680">
 </p>
 
 ## Install
@@ -82,6 +86,22 @@ jobs:
 |--------|-------------|
 | `_screenshot(name)` | Save a PNG of the device canvas or LCD screen |
 | `record_gif(name, fps)` | Context manager: record frames into an animated GIF |
+| `record_video(name, fps)` | Context manager: record frames into a webm video |
+
+### Audio recording
+
+Record audio output from the emulator's Web Audio API:
+
+```python
+from fm1_playwright.recording import audio_patch, start_audio_recording, stop_audio_recording
+
+# audio_patch must wrap page creation and navigation
+with audio_patch(web_dir):
+    # ... create page, navigate, boot ...
+    start_audio_recording(page)
+    # ... play notes ...
+    stop_audio_recording(page, 'output.webm')
+```
 
 ### View modes
 

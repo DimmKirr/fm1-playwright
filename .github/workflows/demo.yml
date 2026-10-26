@@ -1,0 +1,63 @@
+name: Demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  demo:
+    runs-on: ubuntu-24.04
+    env:
+      FIRMWARE_NAME: felucca
+      FIRMWARE_URL: https://thefirmwarehub.com/fw/felucca-1.6.1.fwsc
+      FM1_HEADLESS: '0'
+      DISPLAY: ':99'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: dimmkirr/setup-fm1-emulator@v1
+        id: emu
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          playwright install --with-deps chromium
+
+      - name: Start Xvfb
+        run: |
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 1
+
+      - name: Run demo tests
+        env:
+          FM1_WEB_DIR: ${{ steps.emu.outputs.web-path }}
+        run: python3 -m unittest tests.test_demo -v
+
+      - name: List artifacts
+        run: find results/ -type f -exec ls -lh {} \;
+
+      - name: Upload to demo release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="demo"
+          # Create the release if it doesn't exist
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --title "Demo artifacts" \
+              --notes "Auto-generated demo screenshots, GIFs, video, and audio from the latest main branch. Updated on every push." \
+              --latest=false
+
+          # Upload all artifacts (overwrite existing)
+          for f in results/$FIRMWARE_NAME/screenshots/*; do
+            gh release upload "$TAG" "$f" --clobber
+          done

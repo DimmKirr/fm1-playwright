@@ -21,6 +21,7 @@ from fm1_playwright.mappings import (
     _KNOB_POSITIONS,
     _NOTE_KEYS,
 )
+from fm1_playwright.recording import frames_to_video
 
 FM1_WEB_DIR = Path(os.environ.get('FM1_WEB_DIR', os.environ.get('FM1_EMU_SOURCE', '')))
 FIRMWARE_NAME = os.environ.get('FIRMWARE_NAME', '')
@@ -286,6 +287,33 @@ class FirmwareUITest(unittest.TestCase):
         shutil.rmtree(frames_dir, ignore_errors=True)
         if gif_path.exists():
             print(f'  GIF: {gif_path} ({len(frames)} frames)', flush=True)
+
+    @contextlib.contextmanager
+    def record_video(self, name, fps=4):
+        """Record canvas frames during a block, then stitch into a webm video.
+
+        Usage:
+            with self.record_video('demo', fps=4) as snap:
+                snap()
+                self.play_note('C4', hold_ms=300)
+                snap()
+        """
+        frames_dir = tempfile.mkdtemp(prefix='fm1-video-')
+        frames = []
+
+        def snap():
+            path = self._capture_frame(frames_dir, len(frames))
+            frames.append(path)
+
+        yield snap
+        snap()
+
+        video_path = self._screenshot_dir / f'{FIRMWARE_NAME}-{name}.webm'
+        if len(frames) >= 2:
+            frames_to_video(frames_dir, 'frame-%04d.png', str(video_path), fps=fps)
+        shutil.rmtree(frames_dir, ignore_errors=True)
+        if video_path.exists():
+            print(f'  Video: {video_path} ({len(frames)} frames)', flush=True)
 
     def rotate_encoder(self, name, direction=1, steps=1, delay_ms=300):
         """Rotate a named encoder.

@@ -1,0 +1,118 @@
+# fm1-playwright
+
+Playwright test harness for [FM-1 emulator](https://github.com/joakimeriksson/fm1-emu) firmware UI testing. Rotate encoders, press buttons, play notes, capture screenshots, and record GIFs.
+
+[![License](https://img.shields.io/github/license/DimmKirr/fm1-playwright)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/fm1-playwright)](https://pypi.org/project/fm1-playwright/)
+
+<p align="center">
+  <img src="https://github.com/DimmKirr/setup-fm1-emulator/releases/download/release-screenshots/felucca-play-note.gif" alt="Playing notes on the FM-1 emulator" width="680">
+</p>
+
+## Install
+
+```bash
+pip install fm1-playwright
+```
+
+## Quick start
+
+Subclass `FirmwareUITest` and write tests:
+
+```python
+from fm1_playwright import FirmwareUITest
+from fm1_playwright.testing import BOOT_PATTERN
+
+class MyFirmwareTest(FirmwareUITest):
+    def test_boot(self):
+        self._get_page()
+        self._screenshot('home')
+        status = self._get_page().text_content('#status')
+        self.assertIn(BOOT_PATTERN, status)
+
+    def test_change_preset(self):
+        self.rotate_encoder('k2', direction=1, steps=1, delay_ms=800)
+        self._screenshot('preset-next')
+```
+
+Run with:
+
+```bash
+FM1_WEB_DIR=$HOME/.fm1-emulator/web \
+FIRMWARE_NAME=felucca \
+python3 -m unittest my_tests -v
+```
+
+## GitHub Actions
+
+Use with [setup-fm1-emulator](https://github.com/DimmKirr/setup-fm1-emulator) to run in CI:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: dimmkirr/setup-fm1-emulator@v1
+      - run: pip install fm1-playwright
+      - env:
+          FM1_WEB_DIR: ${{ steps.emu.outputs.web-path }}
+          FIRMWARE_NAME: felucca
+          FIRMWARE_URL: https://thefirmwarehub.com/fw/felucca-1.6.1.fwsc
+        run: python3 -m unittest tests.test_firmware -v
+```
+
+## API
+
+### Emulator control
+
+| Method | Description |
+|--------|-------------|
+| `rotate_encoder(name, direction, steps, delay_ms)` | Rotate an encoder (select, k1, k2, presets, algorithm, master, knob1-4) |
+| `press_button(name, delay_ms)` | Press a button (home, scl, env, lfo, edit, fx, etc.) |
+| `play_note(note, hold_ms, delay_ms)` | Play a note (C4..F5) |
+| `hold_button(name)` | Context manager: hold a button while performing other actions |
+
+### Capture
+
+| Method | Description |
+|--------|-------------|
+| `_screenshot(name)` | Save a PNG of the device canvas or LCD screen |
+| `record_gif(name, fps)` | Context manager: record frames into an animated GIF |
+
+### View modes
+
+Set `FM1_VIEW` to control screenshot capture:
+
+| Value | Captures | Size |
+|-------|----------|------|
+| `DEVICE` (default) | Full device canvas (panel + buttons + keys) | Variable |
+| `SCREEN` | LCD screen only | 240x240 |
+
+### Environment variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FM1_WEB_DIR` | Path to fm1-emu WASM directory | required |
+| `FIRMWARE_NAME` | Firmware name for URL and filenames | required |
+| `FIRMWARE_URL` | URL to a .fwsc firmware file | optional |
+| `RESULTS_DIR` | Output directory for screenshots/GIFs | `results` |
+| `FM1_VIEW` | `DEVICE` or `SCREEN` | `DEVICE` |
+| `FM1_SCALE` | LCD pixel scaling (1-4) | `2` |
+| `FM1_HEADLESS` | `1` for headless, `0` for headed | `1` |
+| `CHROMIUM_PATH` | Custom Chromium binary path | auto-detected |
+
+## Examples
+
+See [`examples/`](examples/) for a full E2E test suite with screenshots and GIF recording.
+
+## Credits
+
+Built on [fm1-emu](https://github.com/joakimeriksson/fm1-emu) by [Joakim Eriksson](https://github.com/joakimeriksson).
+
+## License
+
+[MIT](LICENSE)
